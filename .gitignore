@@ -1,0 +1,29 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+publish/
+*.zip
+
+# NuGet package output (regenerated on build)
+**/nupkg/
+
+# Local SQLite database (recreated from EF migrations on run)
+*.db
+*.db-shm
+*.db-wal
+
+# Azure Functions local settings (per-developer; use local.settings.json.example)
+local.settings.json
+
+# IDE / OS
+.vs/
+.vscode/
+*.user
+.DS_Store
+
+# Azurite local storage emulator data
+azurite-data/
+__azurite_db*.json
+__blobstorage__/
+__queuestorage__/

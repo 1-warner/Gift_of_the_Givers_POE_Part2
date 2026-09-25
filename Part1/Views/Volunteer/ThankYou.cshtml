@@ -1,0 +1,12 @@
+@{
+    ViewData["Title"] = "Thank you";
+    var name = TempData["VolunteerName"] as string;
+}
+<div class="row justify-content-center">
+    <div class="col-lg-7 text-center">
+        <img src="~/images/logo.svg" width="80" height="80" alt="logo" class="mb-3" />
+        <h1 class="text-gotg">Thank you@(string.IsNullOrEmpty(name) ? "" : ", " + name)!</h1>
+        <p class="lead">Your interest to volunteer has been registered. The Gift of the Givers team will be in touch.</p>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-gotg">Back to home</a>
+    </div>
+</div>

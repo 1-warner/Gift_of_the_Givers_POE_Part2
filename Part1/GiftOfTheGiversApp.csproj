@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>aspnet-GiftOfTheGiversApp-587412fa-2d9a-4706-859f-393bc63ad7e0</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="app.db" CopyToOutputDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.30" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.30" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.30" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.30" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.30" />
+    <PackageReference Include="QuestPDF" Version="2026.8.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Part 2 (local build & test): reference the Helpers project directly so the solution
+         compiles and runs without the private Azure Artifacts feed. Section D.2 of the POE
+         swaps this for <PackageReference Include="GiftOfTheGivers.Helpers" Version="1.0.0" />
+         restored from the published Azure Artifacts package. -->
+    <ProjectReference Include="..\GiftOfTheGivers.Helpers\GiftOfTheGivers.Helpers.csproj" />
+  </ItemGroup>
+
+</Project>

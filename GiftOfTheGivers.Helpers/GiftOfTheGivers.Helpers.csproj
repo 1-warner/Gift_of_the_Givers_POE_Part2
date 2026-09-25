@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- NuGet package metadata -->
+    <PackageId>GiftOfTheGivers.Helpers</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Gift of the Givers POE Team (ST10448224, ST10445079, ST10096006)</Authors>
+    <Description>Shared helper utilities for the Gift of the Givers Foundation web application: tax-certificate reference number formatting and donation-total calculations.</Description>
+    <PackageTags>giftofthegivers;helpers;donations</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
+  </PropertyGroup>
+
+</Project>

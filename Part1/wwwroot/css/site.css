@@ -1,0 +1,39 @@
+:root {
+  --gotg-red: #C0392B;
+  --gotg-red-dark: #922B21;
+  --gotg-ink: #1F2933;
+}
+
+html { font-size: 14px; position: relative; min-height: 100%; }
+@media (min-width: 768px) { html { font-size: 16px; } }
+body { margin-bottom: 60px; }
+
+.gotg-navbar { background-color: var(--gotg-ink); }
+.gotg-navbar .nav-link { color: #e6e8eb; }
+.gotg-navbar .nav-link:hover { color: #fff; }
+.navbar-brand span { letter-spacing: .2px; }
+
+.btn-gotg { background-color: var(--gotg-red); border-color: var(--gotg-red); color: #fff; }
+.btn-gotg:hover { background-color: var(--gotg-red-dark); border-color: var(--gotg-red-dark); color: #fff; }
+.text-gotg { color: var(--gotg-red); }
+
+.gotg-hero {
+  background: linear-gradient(135deg, var(--gotg-red) 0%, var(--gotg-red-dark) 100%);
+  color: #fff;
+  border-radius: 12px;
+  padding: 3rem 2rem;
+}
+.gotg-hero h1 { font-weight: 800; }
+
+.gotg-card { border: none; border-radius: 12px; box-shadow: 0 4px 18px rgba(0,0,0,.06); }
+
+.certificate {
+  border: 3px double var(--gotg-red);
+  border-radius: 10px;
+  padding: 2rem;
+  background: #fffdf8;
+}
+
+.footer {
+  position: absolute; bottom: 0; width: 100%; white-space: nowrap; line-height: 60px;
+}

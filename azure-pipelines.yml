@@ -1,0 +1,53 @@
+# Place this file at the root of the Azure Repos Git repository (Section C.1).
+# Azure DevOps -> Pipelines -> New pipeline -> Azure Repos Git -> this repository ->
+# "Existing Azure Pipelines YAML file" -> /azure-pipelines.yml.
+#
+# Builds every project in the solution (web app, Functions project, Helpers library,
+# Tests project) and runs the GiftOfTheGivers.Tests suite.
+
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+  - task: UseDotNet@2
+    displayName: 'Use .NET 8 SDK'
+    inputs:
+      packageType: 'sdk'
+      version: '8.0.x'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Restore'
+    inputs:
+      command: 'restore'
+      projects: '**/*.csproj'
+      feedsToUse: 'config'
+      nugetConfigPath: 'nuget.config'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Build'
+    inputs:
+      command: 'build'
+      projects: '**/*.csproj'
+      arguments: '--configuration $(buildConfiguration) --no-restore'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Run tests'
+    inputs:
+      command: 'test'
+      projects: '**/GiftOfTheGivers.Tests.csproj'
+      arguments: '--configuration $(buildConfiguration) --no-build --logger trx'
+
+  - task: PublishTestResults@2
+    displayName: 'Publish test results'
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFormat: 'VSTest'
+      testResultsFiles: '**/*.trx'

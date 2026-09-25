@@ -1,0 +1,48 @@
+@{
+    ViewData["Title"] = "Home";
+}
+
+<section class="gotg-hero mb-4">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="display-5">Best among people is one who benefits mankind</h1>
+            <p class="lead mb-4">The Gift of the Givers Foundation delivers swift, effective disaster relief across
+                South Africa and beyond. This platform coordinates donations, volunteers and relief projects in one place.</p>
+            <a class="btn btn-light btn-lg me-2" asp-controller="Donate" asp-action="Index">Donate now</a>
+            <a class="btn btn-outline-light btn-lg" asp-controller="Volunteer" asp-action="Index">Become a volunteer</a>
+        </div>
+        <div class="col-md-4 text-center d-none d-md-block">
+            <img src="~/images/logo.svg" alt="Gift of the Givers" width="160" height="160" />
+        </div>
+    </div>
+</section>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card gotg-card h-100">
+            <div class="card-body">
+                <h5 class="card-title text-gotg">Donate</h5>
+                <p class="card-text">Give a one-time or recurring donation in ZAR, USD or EUR and receive a tax certificate instantly.</p>
+                <a asp-controller="Donate" asp-action="Index" class="btn btn-gotg btn-sm">Make a donation</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card gotg-card h-100">
+            <div class="card-body">
+                <h5 class="card-title text-gotg">Volunteer</h5>
+                <p class="card-text">Register your skills and availability so the Foundation can call on you when disaster strikes.</p>
+                <a asp-controller="Volunteer" asp-action="Index" class="btn btn-gotg btn-sm">Register interest</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card gotg-card h-100">
+            <div class="card-body">
+                <h5 class="card-title text-gotg">Relief projects</h5>
+                <p class="card-text">Employees post live updates on ongoing relief operations so donors can see their impact.</p>
+                <a asp-controller="Home" asp-action="About" class="btn btn-gotg btn-sm">Learn more</a>
+            </div>
+        </div>
+    </div>
+</div>

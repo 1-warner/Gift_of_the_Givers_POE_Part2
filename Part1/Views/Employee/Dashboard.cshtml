@@ -1,0 +1,76 @@
+@using GiftOfTheGiversApp.Models
+@{
+    ViewData["Title"] = "Employee Dashboard";
+    var volunteers = ViewBag.Volunteers as List<Volunteer> ?? new();
+    var projects = ViewBag.Projects as List<ReliefProject> ?? new();
+    var updates = ViewBag.Updates as List<ProjectUpdate> ?? new();
+    int donationCount = ViewBag.DonationCount ?? 0;
+}
+<h1 class="text-gotg">Employee Dashboard</h1>
+<p class="text-muted">Signed in as @User.Identity?.Name (Employee role)</p>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-4">
+        <div class="card gotg-card text-center p-3"><div class="h2 text-gotg mb-0">@volunteers.Count</div><div class="text-muted">Volunteer sign-ups</div></div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card gotg-card text-center p-3"><div class="h2 text-gotg mb-0">@donationCount</div><div class="text-muted">Donations recorded</div></div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card gotg-card text-center p-3"><div class="h2 text-gotg mb-0">@projects.Count</div><div class="text-muted">Relief projects</div></div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <h4 class="text-gotg">Post a project update</h4>
+        <form asp-action="PostUpdate" method="post" class="card gotg-card p-3 mb-4">
+            <div class="mb-2">
+                <label class="form-label">Project</label>
+                <select name="projectId" class="form-select">
+                    @foreach (var p in projects)
+                    {
+                        <option value="@p.ProjectId">@p.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="mb-2">
+                <label class="form-label">Update</label>
+                <textarea name="body" class="form-control" rows="2" placeholder="Latest progress on this relief operation…"></textarea>
+            </div>
+            <button type="submit" class="btn btn-gotg">Post update</button>
+        </form>
+
+        <h4 class="text-gotg">Recent updates</h4>
+        @if (updates.Any())
+        {
+            <ul class="list-group">
+                @foreach (var u in updates)
+                {
+                    <li class="list-group-item">
+                        <div><strong>@(u.Project?.Name)</strong> <small class="text-muted">— @u.PostedAt.ToString("dd MMM yyyy HH:mm")</small></div>
+                        @u.Body
+                    </li>
+                }
+            </ul>
+        }
+        else { <p class="text-muted">No updates yet.</p> }
+    </div>
+
+    <div class="col-lg-6">
+        <h4 class="text-gotg">Volunteer sign-ups</h4>
+        @if (volunteers.Any())
+        {
+            <table class="table table-striped">
+                <thead><tr><th>Name</th><th>Skills</th><th>Availability</th></tr></thead>
+                <tbody>
+                @foreach (var v in volunteers)
+                {
+                    <tr><td>@v.FullName</td><td>@v.Skills</td><td>@v.Availability</td></tr>
+                }
+                </tbody>
+            </table>
+        }
+        else { <p class="text-muted">No volunteers have registered yet.</p> }
+    </div>
+</div>

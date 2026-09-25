@@ -1,0 +1,36 @@
+@model GiftOfTheGiversApp.Models.Donation
+@{
+    ViewData["Title"] = "Tax Certificate";
+}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="alert alert-success">Thank you! Your donation has been recorded. Your tax certificate is below.</div>
+
+        <div class="certificate">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <img src="~/images/logo.svg" width="40" height="40" alt="logo" />
+                <div>
+                    <h3 class="text-gotg mb-0">Gift of the Givers Foundation</h3>
+                    <small class="text-muted">Section 18A Tax Certificate &mdash; placeholder (prototype)</small>
+                </div>
+            </div>
+            <hr class="border-danger" />
+            <table class="table table-borderless mb-0">
+                <tr><th style="width:220px">Certificate reference</th><td>@Model.ReferenceNo</td></tr>
+                <tr><th>Donor</th><td>@Model.DonorName</td></tr>
+                <tr><th>Amount</th><td>@Model.Amount.ToString("0.00") @Model.Currency</td></tr>
+                <tr><th>Donation type</th><td>@Model.Frequency</td></tr>
+                <tr><th>Project</th><td>@(Model.Project != null ? Model.Project.Name : "General fund")</td></tr>
+                <tr><th>Date</th><td>@Model.DonatedAt.ToString("dd MMMM yyyy")</td></tr>
+            </table>
+            <p class="fst-italic text-muted mt-3 mb-0">
+                Values are symbolic and not valid for SARS purposes at this prototype stage.
+            </p>
+        </div>
+
+        <div class="mt-3">
+            <a asp-action="CertificatePdf" asp-route-id="@Model.DonationId" class="btn btn-gotg">Download PDF</a>
+            <a asp-action="Index" class="btn btn-outline-secondary">Make another donation</a>
+        </div>
+    </div>
+</div>
