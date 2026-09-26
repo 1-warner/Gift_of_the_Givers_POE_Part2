@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using GiftOfTheGivers.Helpers;
 using Microsoft.AspNetCore.Http;
@@ -54,16 +55,27 @@ public class GenerateTaxCertificateFunction
             return new BadRequestObjectResult(new { error = "donationId and donorName are required." });
         }
 
+        // A certificate is a financial document: a zero or negative amount is never a valid
+        // Section 18A deduction, so it is rejected here rather than printed.
+        if (request.Amount <= 0m)
+        {
+            return new BadRequestObjectResult(new { error = "amount must be greater than zero." });
+        }
+
         var issuedAtUtc = DateTime.UtcNow;
         var referenceNo = TaxCertificateHelper.FormatReferenceNumber(request.DonationId, issuedAtUtc);
 
+        // Amount and date are formatted invariantly for the same reason as the reference number:
+        // the certificate must read identically no matter which region the Function App runs in.
+        // DonationTotalsHelper.FormatAmount is reused so the web app's dashboard totals and the
+        // certificate never drift apart in how they present money.
         var certificateText =
             "Gift of the Givers Foundation - Section 18A Tax Certificate (Placeholder)" + Environment.NewLine +
             $"Reference: {referenceNo}" + Environment.NewLine +
             $"Donor: {request.DonorName}" + Environment.NewLine +
-            $"Amount: {request.Amount:0.00} {request.Currency}" + Environment.NewLine +
+            $"Amount: {DonationTotalsHelper.FormatAmount(request.Amount, request.Currency ?? "ZAR")}" + Environment.NewLine +
             $"Project: {request.ProjectName ?? "General fund"}" + Environment.NewLine +
-            $"Issued: {issuedAtUtc:dd MMMM yyyy}";
+            $"Issued: {issuedAtUtc.ToString("dd MMMM yyyy", CultureInfo.InvariantCulture)}";
 
         _logger.LogInformation(
             "Generated tax certificate {ReferenceNo} for donation {DonationId}.",
