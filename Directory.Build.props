@@ -1,0 +1,17 @@
+<Project>
+
+  <!--
+    Applies to every project in the solution.
+
+    NU1900 is raised when NuGet cannot reach a package source to download its vulnerability
+    (audit) index. The Azure Artifacts feed in nuget.config does not serve one, so every
+    restore on a machine that is not signed in to the feed logs NU1900 once per project,
+    even though the restore itself succeeds. It is suppressed here because it reports the
+    reachability of the audit index, not a vulnerability. Auditing against nuget.org is
+    left enabled, so real advisories on public packages are still reported as NU1901-NU1904.
+  -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);NU1900</NoWarn>
+  </PropertyGroup>
+
+</Project>

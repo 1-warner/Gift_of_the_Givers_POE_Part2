@@ -3,9 +3,17 @@
 # "Existing Azure Pipelines YAML file" -> /azure-pipelines.yml.
 #
 # Builds every project in the solution (web app, Functions project, Helpers library,
-# Tests project) and runs the GiftOfTheGivers.Tests suite.
+# Tests project), runs the GiftOfTheGivers.Tests suite, and publishes the
+# GiftOfTheGivers.Helpers NuGet package to the Azure Artifacts feed (Section D).
 
 trigger:
+  branches:
+    include:
+      - main
+
+# Feature branches are validated on every push as well, so a branch is known to build
+# before its pull request is completed (Section B.2).
+pr:
   branches:
     include:
       - main
@@ -15,6 +23,11 @@ pool:
 
 variables:
   buildConfiguration: 'Release'
+  helpersProject: 'GiftOfTheGivers.Helpers/GiftOfTheGivers.Helpers.csproj'
+  testProject: 'GiftOfTheGivers.Tests/GiftOfTheGivers.Tests.csproj'
+  artifactsFeed: 'GiftOfTheGivers-Packages'
+  packageOutput: '$(Build.ArtifactStagingDirectory)/nupkg'
+  testResultsDir: '$(Agent.TempDirectory)/TestResults'
 
 steps:
   - task: UseDotNet@2
@@ -22,6 +35,12 @@ steps:
     inputs:
       packageType: 'sdk'
       version: '8.0.x'
+
+  # Obtains a short-lived credential for the private Azure Artifacts feed using the
+  # pipeline's own build-service identity. No personal access token is stored in the
+  # repository or in the YAML (Section D.2).
+  - task: NuGetAuthenticate@1
+    displayName: 'Authenticate to Azure Artifacts'
 
   - task: DotNetCoreCLI@2
     displayName: 'Restore'
@@ -38,12 +57,15 @@ steps:
       projects: '**/*.csproj'
       arguments: '--configuration $(buildConfiguration) --no-restore'
 
+  # publishTestResults is turned off here so the results are published once, by the
+  # explicit PublishTestResults step below, from a known folder.
   - task: DotNetCoreCLI@2
     displayName: 'Run tests'
     inputs:
       command: 'test'
-      projects: '**/GiftOfTheGivers.Tests.csproj'
-      arguments: '--configuration $(buildConfiguration) --no-build --logger trx'
+      projects: '$(testProject)'
+      arguments: '--configuration $(buildConfiguration) --no-build --logger trx --results-directory $(testResultsDir)'
+      publishTestResults: false
 
   - task: PublishTestResults@2
     displayName: 'Publish test results'
@@ -51,3 +73,37 @@ steps:
     inputs:
       testResultsFormat: 'VSTest'
       testResultsFiles: '**/*.trx'
+      searchFolder: '$(testResultsDir)'
+      failTaskOnFailedTests: true
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Pack GiftOfTheGivers.Helpers'
+    inputs:
+      command: 'pack'
+      packagesToPack: '$(helpersProject)'
+      configuration: '$(buildConfiguration)'
+      nobuild: true
+      versioningScheme: 'off'
+      packDirectory: '$(packageOutput)'
+
+  # Only the main branch publishes to the feed, so a pull-request validation build never
+  # produces a package version that was not actually merged.
+  - task: DotNetCoreCLI@2
+    displayName: 'Push GiftOfTheGivers.Helpers to Azure Artifacts'
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    inputs:
+      command: 'push'
+      packagesToPush: '$(packageOutput)/*.nupkg'
+      nuGetFeedType: 'internal'
+      publishVstsFeed: '$(artifactsFeed)'
+      # Re-running the pipeline without a version bump must not fail the build; Azure
+      # Artifacts feeds are immutable, so an unchanged 1.0.0 is skipped rather than
+      # overwritten.
+      allowPackageConflicts: true
+
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish package as build artifact'
+    condition: succeededOrFailed()
+    inputs:
+      pathToPublish: '$(packageOutput)'
+      artifactName: 'nupkg'
