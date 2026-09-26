@@ -25,10 +25,10 @@ variables:
   buildConfiguration: 'Release'
   helpersProject: 'GiftOfTheGivers.Helpers/GiftOfTheGivers.Helpers.csproj'
   testProject: 'GiftOfTheGivers.Tests/GiftOfTheGivers.Tests.csproj'
-  # The feed is project-scoped, so it must be named "<project>/<feed>". Given the bare feed name,
-  # the push task looks for an organisation-scoped feed at
-  # pkgs.dev.azure.com/ST10448224/_packaging/... and fails with TF1600011 "the feed doesn't exist".
-  artifactsFeed: 'GiftOfTheGivers-Relief/GiftOfTheGivers-Packages'
+  # The feed is project-scoped, so its URL carries the project segment. An organisation-scoped
+  # URL (pkgs.dev.azure.com/ST10448224/_packaging/...) fails with TF1600011 "the feed doesn't
+  # exist", which is what an earlier run of this pipeline hit.
+  artifactsFeedUrl: 'https://pkgs.dev.azure.com/ST10448224/GiftOfTheGivers-Relief/_packaging/GiftOfTheGivers-Packages/nuget/v3/index.json'
   packageOutput: '$(Build.ArtifactStagingDirectory)/nupkg'
   testResultsDir: '$(Agent.TempDirectory)/TestResults'
 
@@ -91,18 +91,20 @@ steps:
 
   # Only the main branch publishes to the feed, so a pull-request validation build never
   # produces a package version that was not actually merged.
-  - task: DotNetCoreCLI@2
+  #
+  # This is a script step rather than the DotNetCoreCLI@2 push command because that task's
+  # allowPackageConflicts input is not passed through to `dotnet nuget push`: an unchanged
+  # version still returns 409 Conflict and fails the build. --skip-duplicate is the flag
+  # dotnet itself offers for this, and Azure Artifacts feeds are immutable, so re-publishing
+  # an unchanged 1.0.0 is a no-op rather than an overwrite. Credentials come from the
+  # NuGetAuthenticate@1 task above, so --api-key is only a placeholder dotnet requires.
+  - script: >
+      dotnet nuget push "$(packageOutput)/*.nupkg"
+      --source "$(artifactsFeedUrl)"
+      --api-key AzureDevOps
+      --skip-duplicate
     displayName: 'Push GiftOfTheGivers.Helpers to Azure Artifacts'
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
-    inputs:
-      command: 'push'
-      packagesToPush: '$(packageOutput)/*.nupkg'
-      nuGetFeedType: 'internal'
-      publishVstsFeed: '$(artifactsFeed)'
-      # Re-running the pipeline without a version bump must not fail the build; Azure
-      # Artifacts feeds are immutable, so an unchanged 1.0.0 is skipped rather than
-      # overwritten.
-      allowPackageConflicts: true
 
   - task: PublishBuildArtifacts@1
     displayName: 'Publish package as build artifact'
