@@ -98,11 +98,22 @@ steps:
   # dotnet itself offers for this, and Azure Artifacts feeds are immutable, so re-publishing
   # an unchanged 1.0.0 is a no-op rather than an overwrite. Credentials come from the
   # NuGetAuthenticate@1 task above, so --api-key is only a placeholder dotnet requires.
-  - script: >
-      dotnet nuget push "$(packageOutput)/*.nupkg"
-      --source "$(artifactsFeedUrl)"
-      --api-key AzureDevOps
-      --skip-duplicate
+  # PowerShell resolves the package paths rather than passing a wildcard to dotnet. On the
+  # Windows agent $(Build.ArtifactStagingDirectory) is a backslash path, so the combined
+  # "D:\a\1\a/nupkg/*.nupkg" is not matched by dotnet's own globbing; Get-ChildItem handles the
+  # mixed separators and hands dotnet a real file path. pwsh is present on Windows and Linux
+  # agents alike, so the step does not tie the pipeline to one image.
+  - pwsh: |
+      $packages = Get-ChildItem -Path "$(packageOutput)" -Filter *.nupkg -File
+      if (-not $packages) { throw "No .nupkg found in $(packageOutput)" }
+      foreach ($package in $packages) {
+        Write-Host "Pushing $($package.Name)"
+        dotnet nuget push $package.FullName `
+          --source "$(artifactsFeedUrl)" `
+          --api-key AzureDevOps `
+          --skip-duplicate
+        if ($LASTEXITCODE -ne 0) { throw "dotnet nuget push failed for $($package.Name)" }
+      }
     displayName: 'Push GiftOfTheGivers.Helpers to Azure Artifacts'
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
 
