@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Azure.Data.Tables;
 using Microsoft.AspNetCore.Http;
@@ -27,7 +28,19 @@ public class LogProjectUpdateFunction
         _configuration = configuration;
     }
 
-    public record LogUpdateRequest(int ProjectId, string ProjectName, string? AuthorName, string Body);
+    /// <summary>
+    /// UpdateId is the primary key of the ProjectUpdates row the web app has just saved. It is
+    /// carried into the audit log so a row here can be tied back to the relational record; without
+    /// it the two stores can only be matched on a fuzzy combination of project, author and text.
+    /// It is optional so that a caller which has not saved to the database (for example a manual
+    /// Postman test) is still accepted.
+    /// </summary>
+    public record LogUpdateRequest(
+        int ProjectId,
+        string? ProjectName,
+        string? AuthorName,
+        string Body,
+        int? UpdateId = null);
 
     [Function("LogProjectUpdate")]
     public async Task<IActionResult> Run(
@@ -60,19 +73,51 @@ public class LogProjectUpdateFunction
         var tableClient = new TableClient(connectionString, TableName);
         await tableClient.CreateIfNotExistsAsync();
 
-        var entity = new TableEntity(partitionKey: request.ProjectId.ToString(), rowKey: Guid.NewGuid().ToString())
+        var loggedAtUtc = DateTime.UtcNow;
+
+        var entity = new TableEntity(
+            partitionKey: request.ProjectId.ToString(CultureInfo.InvariantCulture),
+            rowKey: BuildRowKey(loggedAtUtc))
         {
-            { "ProjectName", request.ProjectName },
+            { "ProjectName", request.ProjectName ?? "Unknown project" },
             { "AuthorName", request.AuthorName ?? "Unknown" },
             { "Body", request.Body },
-            { "LoggedAtUtc", DateTime.UtcNow }
+            { "LoggedAtUtc", loggedAtUtc },
+            { "UpdateId", request.UpdateId }
         };
 
         await tableClient.AddEntityAsync(entity);
 
         _logger.LogInformation(
-            "Logged project update for project {ProjectId} to Azure Table Storage.", request.ProjectId);
+            "Logged project update {UpdateId} for project {ProjectId} to Azure Table Storage as {RowKey}.",
+            request.UpdateId, request.ProjectId, entity.RowKey);
 
-        return new OkObjectResult(new { status = "logged", partitionKey = entity.PartitionKey, rowKey = entity.RowKey });
+        return new OkObjectResult(new
+        {
+            status = "logged",
+            partitionKey = entity.PartitionKey,
+            rowKey = entity.RowKey,
+            updateId = request.UpdateId
+        });
+    }
+
+    /// <summary>
+    /// Builds a row key that sorts newest-first inside the project's partition.
+    /// </summary>
+    /// <remarks>
+    /// Table Storage always returns a partition's rows in ascending row-key order and offers no
+    /// "order by" of its own, so a random GUID key means the audit log for a project comes back in
+    /// arbitrary order and the most recent entries can only be found by reading every row.
+    /// Prefixing the key with the descending tick count is the standard Table Storage pattern for
+    /// a time series: the newest row sorts first, so "the last N updates for this project" becomes
+    /// a top-N query. The GUID suffix keeps the key unique when two updates land on the same tick.
+    /// </remarks>
+    private static string BuildRowKey(DateTime loggedAtUtc)
+    {
+        var descendingTicks = DateTime.MaxValue.Ticks - loggedAtUtc.Ticks;
+
+        return string.Create(
+            CultureInfo.InvariantCulture,
+            $"{descendingTicks:D19}-{Guid.NewGuid()}");
     }
 }

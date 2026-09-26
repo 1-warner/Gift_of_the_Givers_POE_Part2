@@ -68,12 +68,15 @@ public class EmployeeController : Controller
         {
             var client = _httpClientFactory.CreateClient("FunctionsClient");
 
+            // updateId is the ProjectUpdates primary key assigned by SaveChangesAsync above. It
+            // lets a row in the Table Storage audit log be traced back to the database record.
             var payload = JsonSerializer.Serialize(new
             {
                 projectId = update.ProjectId,
                 projectName,
                 authorName = update.AuthorName,
-                body = update.Body
+                body = update.Body,
+                updateId = update.UpdateId
             });
 
             using var content = new StringContent(payload, Encoding.UTF8, "application/json");
