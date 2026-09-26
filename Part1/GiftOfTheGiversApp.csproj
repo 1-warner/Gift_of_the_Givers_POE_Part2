@@ -21,11 +21,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Part 2 (local build & test): reference the Helpers project directly so the solution
-         compiles and runs without the private Azure Artifacts feed. Section D.2 of the POE
-         swaps this for <PackageReference Include="GiftOfTheGivers.Helpers" Version="1.0.0" />
-         restored from the published Azure Artifacts package. -->
-    <ProjectReference Include="..\GiftOfTheGivers.Helpers\GiftOfTheGivers.Helpers.csproj" />
+    <!-- Section D.2: the shared helper library is consumed as a published NuGet package from the
+         Azure Artifacts feed (GiftOfTheGivers-Packages), not as a project reference, so the web app
+         depends on a versioned artifact the same way any other consumer would. The feed is declared
+         in nuget.config at the root of the solution.
+
+         Restoring this package needs credentials for the private feed:
+           * Azure Pipelines - supplied by the NuGetAuthenticate@1 task.
+           * Visual Studio   - prompts to sign in on the first restore.
+           * Command line    - set AZURE_ARTIFACTS_PAT to a PAT with Packaging (Read) scope. -->
+    <PackageReference Include="GiftOfTheGivers.Helpers" Version="1.0.0" />
   </ItemGroup>
 
 </Project>

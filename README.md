@@ -28,10 +28,25 @@ To run the Functions locally: start Azurite (storage emulator), copy
 points at `http://localhost:7071/api/`).
 
 ## Status
-- Solution builds clean (0 errors/0 warnings); 8/8 xUnit tests pass.
-- Both functions verified locally via HTTP and via the web app's donation and employee-update forms.
-- Local build references `GiftOfTheGivers.Helpers` as a project reference; Section D.2 swaps this
-  for the published Azure Artifacts package (`<PackageReference Include="GiftOfTheGivers.Helpers" Version="1.0.0" />`).
+- Solution builds clean (0 errors); 12/12 xUnit tests pass.
+- Both functions verified locally via HTTP (8 cases, including error paths) and via the web app's
+  donation and employee-update forms.
+- Code is in Azure Repos: `ST10448224/GiftOfTheGivers-Relief`. Three feature branches were merged
+  into `main` through pull requests !1, !2 and !3.
+- CI runs on every push to `main` and on pull requests: restore, build, test, pack, publish.
+- `GiftOfTheGivers.Helpers` 1.0.0 is published to the Azure Artifacts feed
+  `GiftOfTheGivers-Packages` by the pipeline itself, using the build-service identity.
+- The web app consumes it as a package, not a project reference:
+  `<PackageReference Include="GiftOfTheGivers.Helpers" Version="1.0.0" />`.
 
-Azure Repos push, branches/PRs, the Pipeline run, the Artifacts feed/publish, and the Function
-App deployment are completed in the team's own Azure DevOps / Azure portals.
+### Restoring the private feed
+`nuget.config` points at the project-scoped Azure Artifacts feed, so a restore needs credentials:
+
+| Where | How |
+|---|---|
+| Azure Pipelines | `NuGetAuthenticate@1` task, using the pipeline's build-service identity |
+| Visual Studio | prompts to sign in on the first restore |
+| Command line | set `AZURE_ARTIFACTS_PAT` to a PAT with **Packaging (Read)** scope |
+
+A `packageSourceMapping` entry restricts the private feed to `GiftOfTheGivers.*`, so every other
+dependency still resolves from nuget.org and cannot be shadowed by the private feed.
