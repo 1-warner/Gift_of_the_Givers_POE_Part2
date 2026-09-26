@@ -25,7 +25,10 @@ variables:
   buildConfiguration: 'Release'
   helpersProject: 'GiftOfTheGivers.Helpers/GiftOfTheGivers.Helpers.csproj'
   testProject: 'GiftOfTheGivers.Tests/GiftOfTheGivers.Tests.csproj'
-  artifactsFeed: 'GiftOfTheGivers-Packages'
+  # The feed is project-scoped, so it must be named "<project>/<feed>". Given the bare feed name,
+  # the push task looks for an organisation-scoped feed at
+  # pkgs.dev.azure.com/ST10448224/_packaging/... and fails with TF1600011 "the feed doesn't exist".
+  artifactsFeed: 'GiftOfTheGivers-Relief/GiftOfTheGivers-Packages'
   packageOutput: '$(Build.ArtifactStagingDirectory)/nupkg'
   testResultsDir: '$(Agent.TempDirectory)/TestResults'
 
